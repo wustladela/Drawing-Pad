@@ -1,0 +1,263 @@
+<!-- Authors: Amanda Whalen, Adela Gao
+Class Project: cse330 module 8
+July, 2014 -->
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Module 8</title>
+		<link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+		<link href="favicon.ico" rel="icon" type="image/x-icon" />
+	</head>
+	<body>
+		<ul id="navigation">
+            <li><a href="drawpad.html"> Drawing Pad</a></li>
+            <li><a href="main.html"> Dashboard</a></li>
+            <li><a href="friends.html">Friends</a></li>
+        </ul>
+        <br>
+		<h1>Module 8</h1>
+		<h2 id="amiloggedin">Please either log in or register below.</h2>
+		<div id="login_or_reg">
+			<h2>Login:</h2>
+			Username:<input type="text" name="username" id="username"/>
+			Password:<input type="password" name="password" id="password"/>
+			<input type="button" name="loginbtn" id="loginbtn" value="Login"/>
+
+			<h2>Register:</h2>
+			Username:<input type="text" name="new_usr" id="new_usr"/>
+			Password:<input type="password" name="new_pw" id="new_pw"/>
+			<input type="button" name="regbtn" id="regbtn" value="Register"/>
+		</div>
+		<div id="drawings_list">
+			<br><br>
+			<table class='center' id="drawtable">
+				<tr><th>Drawing Name</th><th>Last Modified</th><th>Actions</th></tr>	
+			</table>
+		</div>
+		<script type="text/javascript">
+			document.getElementById("loginbtn").addEventListener("click", login, false);
+			document.getElementById("regbtn").addEventListener("click", register, false);
+			document.addEventListener("DOMContentLoaded", currentlyLoggedIn, false);
+			var token;
+
+			function login(){
+				var username = document.getElementById("username").value;
+				var password = document.getElementById("password").value;
+				var eventData = "username="+encodeURIComponent(username)+"&password="+encodeURIComponent(password);
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "login.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", loginCallback, false);
+                xmlHttp.send(eventData);
+			}
+			function loginCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					document.getElementById("login_or_reg").style.display="none";
+					document.getElementById("amiloggedin").innerHTML="You are logged in as "+json_response.username+".<br>";
+					document.getElementById("amiloggedin").innerHTML+="<input type='button' id='logoutbtn' value='Logout'>";
+					document.getElementById("logoutbtn").addEventListener("click", logout, false);
+					token = json_response.token;
+					//alert(token);
+					displayAll();
+				}else{
+					alert("Login failed");
+				}
+			}
+			function register(){
+				var username=document.getElementById("new_usr").value;
+				var password=document.getElementById("new_pw").value;
+				var eventData = "username="+encodeURIComponent(username)+"&password="+encodeURIComponent(password);
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "register.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", registerCallback, false);
+                xmlHttp.send(eventData);
+			}
+			function registerCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					document.getElementById("new_usr").value="";
+					document.getElementById("new_pw").value="";
+					alert("Registration success");
+				}
+			}
+			function currentlyLoggedIn(){
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "currentlyLoggedIn.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", currentlyLoggedInCallback, false);
+                xmlHttp.send(null);
+			}
+			function currentlyLoggedInCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					document.getElementById("login_or_reg").style.display="none";
+					document.getElementById("amiloggedin").innerHTML="You are logged in as "+json_response.username+".<br>";
+					document.getElementById("amiloggedin").innerHTML+="<input type='button' id='logoutbtn' value='Logout'>";
+					document.getElementById("logoutbtn").addEventListener("click", logout, false);
+					displayAll();
+				}
+				if(json_response.status=="fail"){
+					document.getElementById("login_or_reg").style.display="";
+					document.getElementById("amiloggedin").innerHTML="Please either log in or register below.";
+				}
+			}
+			function logout(){
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "logout.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", logoutCallback, false);
+                xmlHttp.send(null);
+			}
+			function logoutCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					document.getElementById("login_or_reg").style.display="";
+					document.getElementById("amiloggedin").innerHTML="Please either log in or register below.";
+					document.getElementById("username").value="";
+					document.getElementById("password").value="";
+					document.getElementById("drawtable").innerHTML = "<tr><th>Drawing Name</th><th>Last Modified</th><th>Actions</th></tr>";
+					//document.getElementById("name1").innerHTML="";
+					//document.getElementById("time1").innerHTML="";
+					alert("Logged out successfully");
+				}
+			}
+			function displayAll(){
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "displayAll.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", displayAllCallback, false);
+                xmlHttp.send(null);
+			}
+			function displayAllCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				document.getElementById("drawtable").innerHTML = "<tr><th>Drawing Name</th><th>Last Modified</th><th>Actions</th></tr>";
+				if(json_response.status=="success"){
+					for(var i=0;i<json_response.name.length;i++){
+						var name =json_response.name[i];
+						name = name.replace(/ /g, '_');		
+						//alert(name);				
+						document.getElementById("drawtable").innerHTML+="<tr id=row"+i+"><td>"+json_response.name[i]+"</td><td>"+json_response.time[i]+"</td><td><input type='button' name='editbtn' id=editbtn_"+name+" value='Edit'/>"+"<input type='button' name='deletebtn' id=deletebtn_"+name+" value='Delete'/></td></tr>";
+					}
+					for(var i=0;i<json_response.name.length;i++){
+						var name = json_response.name[i];
+						name = name.replace(/ /g, '_');
+						if(document.getElementById("editbtn_"+name)!=null){
+							//alert("reached");
+							document.getElementById("editbtn_"+name).addEventListener("click", setEditName, false);
+							document.getElementById("deletebtn_"+name).addEventListener("click", deleteDrawing, false);
+						}
+					}
+				}
+				
+				if(json_response.status=="view_friend"){
+					document.getElementById("amiloggedin").innerHTML = "Viewing "+json_response.friend+"'s Page.<br><input type='button' name='returnbtn' id='returnbtn' value='Return to your own page'/>";
+					document.getElementById("returnbtn").addEventListener("click", returnToOwnPage, false);
+					for(var i=0;i<json_response.name.length;i++){
+						var name =json_response.name[i];
+						name = name.replace(/ /g, '_');											
+						document.getElementById("drawtable").innerHTML+="<tr id=row"+i+"><td>"+json_response.name[i]+"</td><td>"+json_response.time[i]+"</td><td><input type='button' name='viewbtn' id=viewbtn_"+name+" value='View'/>";
+					}
+					for(var i=0;i<json_response.name.length;i++){
+						var name = json_response.name[i];
+						name = name.replace(/ /g, '_');
+						if(document.getElementById("viewbtn_"+name)!=null){
+							//alert("reached");
+							document.getElementById("viewbtn_"+name).addEventListener("click", setViewName, false);
+						}
+					}
+				}
+				
+				if(json_response.status=="fail"){
+					alert("display failed");
+				}
+			}
+			function returnToOwnPage(){
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "return.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", returnToOwnPageCallback, false);
+                xmlHttp.send(null);
+			}
+			function returnToOwnPageCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					displayAll();
+					document.getElementById("amiloggedin").innerHTML="You are logged in as "+json_response.username+".<br>";
+					document.getElementById("amiloggedin").innerHTML+="<input type='button' id='logoutbtn' value='Logout'>";
+					document.getElementById("logoutbtn").addEventListener("click", logout, false);
+				}
+			}
+			function setEditName(){
+				//alert("reached editDrawing");
+				editId = this.id.substring('editbtn_'.length);
+				editId = editId.replace(/_/g, ' ');
+				//alert(editId);
+				var eventData = "name="+encodeURIComponent(editId);
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "setEditName.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", setEditNameCallback, false);
+                xmlHttp.send(eventData);
+			}
+			function setEditNameCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					//alert("success");
+					window.location = "drawpad.html";
+					//alert(json_response.clickX);
+				}
+			}
+			function setViewName(){
+				viewId = this.id.substring('viewbtn_'.length);
+				viewId = viewId.replace(/_/g, ' ');
+				alert(viewId);
+				var eventData = "name="+encodeURIComponent(viewId);
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "setViewName.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", setViewNameCallback, false);
+                xmlHttp.send(eventData);
+			}
+			function setViewNameCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					window.location = "drawpad.html";
+				}
+			}
+			function deleteDrawing(){
+				deleteId = this.id.substring('deletebtn_'.length);
+				alert(deleteId);
+				var eventData = "name="+encodeURIComponent(deleteId);
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "deleteDrawing.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", deleteDrawingCallback, false);
+                xmlHttp.send(eventData);
+			}
+			function deleteDrawingCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					alert("deleted successfully");
+					displayAll();
+				}
+				if(json_response.status=="notloggedin"){
+					alert("Please log in");
+				}
+			}
+			Element.prototype.remove = function() {
+                this.parentElement.removeChild(this);
+            }
+            NodeList.prototype.remove = HTMLCollection.prototype.remove = function() {
+                for(var i = 0, len = this.length; i < len; i++) {
+                    if(this[i] && this[i].parentElement) {
+                        this[i].parentElement.removeChild(this[i]);
+                    }
+                }
+            }
+
+		</script>
+	</body>
+</html>

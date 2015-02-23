@@ -1,0 +1,66 @@
+body{
+	background-color:blanchedalmond;
+	background-image: 
+	radial-gradient(circle at 100% 150%, blanchedalmond 24%, white 25%, white 28%, blanchedalmond 29%, blanchedalmond 36%, white 36%, white 40%, transparent 40%, transparent),
+	radial-gradient(circle at 0    150%, blanchedalmond 24%, white 25%, white 28%, blanchedalmond 29%, blanchedalmond 36%, white 36%, white 40%, transparent 40%, transparent),
+	radial-gradient(circle at 50%  100%, white 10%, blanchedalmond 11%, blanchedalmond 23%, white 24%, white 30%, blanchedalmond 31%, blanchedalmond 43%, white 44%, white 50%, blanchedalmond 51%, blanchedalmond 63%, white 64%, white 71%, transparent 71%, transparent),
+	radial-gradient(circle at 100% 50%, white 5%, blanchedalmond 6%, blanchedalmond 15%, white 16%, white 20%, blanchedalmond 21%, blanchedalmond 30%, white 31%, white 35%, blanchedalmond 36%, blanchedalmond 45%, white 46%, white 49%, transparent 50%, transparent),
+	radial-gradient(circle at 0    50%, white 5%, blanchedalmond 6%, blanchedalmond 15%, white 16%, white 20%, blanchedalmond 21%, blanchedalmond 30%, white 31%, white 35%, blanchedalmond 36%, blanchedalmond 45%, white 46%, white 49%, transparent 50%, transparent);
+	background-size:100px 50px;
+	text-align: center;
+}
+h1{
+	text-align: center;
+}
+h2{
+	text-align: center;
+}
+#login_or_reg{
+	text-align: center;
+}
+table.center{
+	margin-left: auto;
+	margin-right: auto;
+}
+#drawings_list{
+	text-align: center;
+}
+canvas {
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+#navigation li{
+    list-style: none;
+    margin: 0 auto;
+    width: 450px;
+}
+#navigation li a{
+    text-shadow: 0 2px 1px rgba(0,0,0,0.5);
+    float: left;
+    text-decoration: none;
+    color: #00008B;
+    font-size: 1.6em;
+    margin: 0 .5em;
+}
+#navigation li a:hover {
+    margin-top: 2px;
+}
+.ui-widget-overlay {
+   background: #ffffff;
+   opacity: .90;
+}
+.ui-widget-overlay.custom-overlay
+{
+    background-color: green;
+    background-image: none;
+    opacity: 0.9;   
+}
+.ui-widget-overlay {
+  opacity: 0.9;
+  background-color: green;
+}
+.ui-dialog,.ui-dialog,.ui-widget, .ui-widget-content, .ui-corner-all, .requests, .ui-draggable, .ui-resizable {background:#CCFFFF !important}

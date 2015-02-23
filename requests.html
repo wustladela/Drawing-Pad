@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Check Requests</title>
+	<meta charset="utf-8">
+</head>
+<body>
+	<table id="requests">
+		<th><td>Request From</td><td>Actions</td></th>
+	</table>
+	<input type="button" name="close" id="close" value="Close"/>
+	<script type="text/javascript">
+		//alert(document.getElementById("close").value);
+		document.getElementById("close").addEventListener("click", window.opener.closeWindow, false);
+		document.addEventListener("DOMContentLoaded", seeRequests, false);
+
+		function seeRequests(){
+			alert("reached");
+			var xmlHttp = new XMLHttpRequest();
+			xmlHttp.open("POST", "checkRequests.php", true);
+			xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        	xmlHttp.addEventListener("load", requestsCallback, false);
+        	xmlHttp.send(null);
+		}
+		function requestsCallback(event){
+			var json_response = JSON.parse(event.target.responseText);
+			if(json_response.status=="success"){
+				document.getElementById("requests").innerHTML = "<th><td>Request From</td><td>Actions</td></th>";
+				for(var i=0;i<json_response.users.length){
+					document.getElementById("requests").innerHTML += "<tr><td>"+json_response.users[i]+"</td></td><input type='button' name='ignore' id=ignore"+json_response.users[i]+" value='Ignore'/><input type='button' name='accept' id=accept"+json_response.users[i]+" value='Accept'/>";
+				}
+				for(var i=0;i<json_response.users.length){
+					document.getElementById("ignore"+json_response.users[i]).addEventListener("click", ignore, false);
+					document.getElementById("accept"+json_response.users[i]).addEventListener("click", accept, false);
+				}
+				
+			}
+		}
+		function ignore(){
+			ignoreid = this.id.substring('ignore'.length);
+			var eventData = "DeleteRequestFrom="+encodeURIComponent(ignoreid);
+			var xmlHttp = new XMLHttpRequest();
+			xmlHttp.open("POST", "deleteRequest.php", true);
+			xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        	xmlHttp.addEventListener("load", requestsCallback, false);
+        	xmlHttp.send(eventData);
+			
+		}
+	</script>
+</body>
+</html>

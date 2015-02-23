@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Module 8</title>
+		<link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+		<link href="favicon.ico" rel="icon" type="image/x-icon" />
+	</head>
+	<body>
+		<ul id="navigation">
+            <li><a href="drawpad.html">Drawing Pad</a></li>
+            <li><a href="main.html">Dashboard</a></li>
+            <li><a href="friends.html">Friends</a></li>
+        </ul>
+        <br>
+		<h1>Drawing Pad</h1>
+		<input type="button" name="clear" id="clear" value="Clear drawing pad"/>
+		Select Color:<input class="color" name="select_color" id="select_color" value="000000"/>
+		Select Line Size:<input type="radio" name="select_line_size" id="small"/>Small
+		<input type="radio" name="select_line_size" id="medium" checked/>Medium
+		<input type="radio" name="select_line_size" id="large"/>Large
+		<input type="radio" name="select_line_size" id="huge"/>Huge
+		Select Tool:<input type="radio" name="tool" id="marker" checked/>Marker
+		<input type="radio" name="tool" id="eraser"/>Eraser
+		<input type="button" name="savebtn" id="savebtn" value="Save Drawing"/>
+		<br><br>
+		<canvas id="drawpad" width="500" height="500"></canvas>
+		<script type="text/javascript" src="jscolor-1.4.3/jscolor/jscolor.js"></script>
+		<script type="text/javascript">
+			var canvas = document.getElementById("drawpad");
+			var context = canvas.getContext("2d");
+			//var dataURL = canvas.toDataURL();
+			var edit = false;
+			var viewFriend = false;
+			context.fillStyle="white";
+			context.fillRect(0, 0, 500, 500);
+
+			//document.getElementById("canvasImg").src = dataURL;
+			document.getElementById("clear").addEventListener("click", clearCanvas, false);
+			document.getElementById("drawpad").addEventListener("mousedown", mousedown, false);
+			document.getElementById("drawpad").addEventListener("mousemove", mousemove, false);
+			document.getElementById("drawpad").addEventListener("mouseup", mouseup, false);
+			document.getElementById("drawpad").addEventListener("mouseleave", mouseleave, false);
+			document.getElementById("small").addEventListener("click", function(){curSize=2;}, false);
+			document.getElementById("medium").addEventListener("click", function(){curSize=5;}, false);
+			document.getElementById("large").addEventListener("click", function(){curSize=10;}, false);
+			document.getElementById("huge").addEventListener("click", function(){curSize=15;}, false);
+			document.getElementById("marker").addEventListener("click", function(){curTool="marker";}, false);
+			document.getElementById("eraser").addEventListener("click", function(){curTool="eraser";}, false);
+			document.getElementById("savebtn").addEventListener("click", openpop, false);
+			document.addEventListener("DOMContentLoaded", editDrawing, false);
+
+			var paint=false;
+			var clickX = new Array();
+			var clickY = new Array();
+			var clickDrag = new Array();
+			var clickColor = new Array();
+			var clickSize = new Array();
+			var color;
+			var curSize = 5;
+			var curTool = "marker";
+			var token;
+
+			function mousedown(event){
+				var mouseX = event.pageX - this.offsetLeft;
+				var mouseY = event.pageY - this.offsetTop;
+				paint = true;
+				addClick(mouseX, mouseY);
+				redraw();
+			}
+			function mousemove(event){
+				if(paint){
+					addClick(event.pageX - this.offsetLeft, event.pageY - this.offsetTop, true);
+					redraw();
+				}
+			}
+			function mouseup(event){
+				paint = false;
+			}
+			function mouseleave(event){
+				paint = false;
+			}
+			function addClick(x, y, dragging){
+				color = "#"+document.getElementById("select_color").value;
+				//alert(color);
+				if(curTool=="eraser"){
+					color="white";
+				}
+				clickColor.push(color);
+				clickX.push(x);
+				clickY.push(y);
+				clickDrag.push(dragging);
+				clickSize.push(curSize);
+			}
+			function redraw(){
+				//alert("reached redraw");
+				context.clearRect(0,0,500,500);
+				context.fillStyle = "white";
+				context.fillRect(0,0,500,500);
+  				context.lineJoin = "round";
+  				//context.lineWidth = 5;
+
+				for(var i=0;i<clickX.length;i++){
+					//alert("reached for loop");
+					//alert(clickX.length);
+					context.beginPath();
+					if(clickDrag[i] && i){
+						//alert("reached if statement");
+						context.moveTo(clickX[i-1], clickY[i-1]);
+					}else{
+						context.moveTo(clickX[i]-1, clickY[i]);
+					}
+					context.lineWidth = clickSize[i];
+					context.strokeStyle = clickColor[i];
+					context.lineTo(clickX[i], clickY[i]);
+					context.closePath();
+					context.stroke();
+					//alert("reached end");
+				}
+			}
+			function clearCanvas(){
+				context.clearRect(0,0,500,500);
+				context.fillStyle = "white";
+				context.fillRect(0,0,500,500); 
+				clickX = [];
+				clickY = [];
+				clickDrag = [];
+				clickColor = [];
+				clickSize = [];
+			}
+			function openpop(){
+				//alert(edit);
+				if(!edit){
+					OpenWindow=window.open("window.html", "newwin", "height=250, width=250");
+				}
+				if(edit){
+					EditWindow=window.open("edit_window.html", "newwin", "height=250, width=250");
+				}
+
+			}
+			function windowsave(){
+				var window_title = OpenWindow.document.getElementById("window_title").value;
+				OpenWindow.close();
+				var date = new Date();
+				var xmlHttp = new XMLHttpRequest();
+				var eventData = "name="+encodeURIComponent(window_title)+"&time="+encodeURIComponent(date)+"&clickX="+encodeURIComponent(clickX)+"&clickY="+encodeURIComponent(clickY)+"&clickDrag="+encodeURIComponent(clickDrag)+"&clickColor="+encodeURIComponent(clickColor)+"&clickSize="+encodeURIComponent(clickSize)+"&edit="+encodeURIComponent(edit)+"&token="+encodeURIComponent(token);
+				xmlHttp.open("POST", "save.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", windowsaveCallback, false);
+                xmlHttp.send(eventData);
+			}
+			function windowsaveCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					alert("saved successfully");
+				}
+				if(json_response.status=="fail"){
+					alert("save failed");
+				}
+				//alert(json_response.status + " "+ json_response.token + " "+ json_response.session);
+			}
+			function windowedit(){
+				//alert("reached windowedit");
+				var window_title = EditWindow.document.getElementById("window_title").value;
+				var date = new Date();
+				var xmlHttp = new XMLHttpRequest();
+				//alert(window_title);
+				//lert(clickX);
+				EditWindow.close();
+				var date = new Date();
+				var eventData = "name="+encodeURIComponent(window_title)+"&time="+encodeURIComponent(date)+"&clickX="+encodeURIComponent(clickX)+"&clickY="+encodeURIComponent(clickY)+"&clickDrag="+encodeURIComponent(clickDrag)+"&clickColor="+encodeURIComponent(clickColor)+"&clickSize="+encodeURIComponent(clickSize)+"&edit="+encodeURIComponent(edit)+"&token="+encodeURIComponent(token);
+				xmlHttp.open("POST", "save.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", windoweditCallback, false);
+                xmlHttp.send(eventData);
+			}
+			function windoweditCallback(event){
+				var json_response = JSON.parse(event.target.responseText);
+				//alert("reached callback");
+				if(json_response.status=="success"){
+					alert("Drawing edited successfully");
+					edit=false;
+				}
+			}
+			function editDrawing(){
+				//alert("reached editDrawing");
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "edit.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xmlHttp.addEventListener("load", editDrawingCallback, false);
+                xmlHttp.send(null);
+			}
+			function editDrawingCallback(event){
+				//alert("reached callback");
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					for(var i=0;i<json_response.clickX.length;i++){
+						clickX.push(json_response.clickX[i]);
+						clickY.push(json_response.clickY[i]);
+						clickDrag.push(json_response.clickDrag[i]);
+						clickColor.push(json_response.clickColor[i]);
+						clickSize.push(json_response.clickSize[i]);
+					}
+					curTool = "marker";
+					redraw();
+					edit = true;
+					token = json_response.token;
+				}
+				if(json_response.status=="view_friend"){
+					for(var i=0;i<json_response.clickX.length;i++){
+						clickX.push(json_response.clickX[i]);
+						clickY.push(json_response.clickY[i]);
+						clickDrag.push(json_response.clickDrag[i]);
+						clickColor.push(json_response.clickColor[i]);
+						clickSize.push(json_response.clickSize[i]);
+					}
+					curTool = "marker";
+					document.getElementById("savebtn").remove();
+					redraw();
+					token = json_response.token;
+				}
+				if(json_response.status=="fail"){
+					alert("select edit info failed");
+				}
+				if(json_response.status=="notloggedin"){
+					alert("Please log in");
+				}
+				if(json_response.status=="notedit"){
+					token = json_response.token;
+				}
+			}
+			Element.prototype.remove = function() {
+                this.parentElement.removeChild(this);
+            }
+            NodeList.prototype.remove = HTMLCollection.prototype.remove = function() {
+                for(var i = 0, len = this.length; i < len; i++) {
+                    if(this[i] && this[i].parentElement) {
+                        this[i].parentElement.removeChild(this[i]);
+                    }
+                }
+            }
+		</script>
+	</body>
+</html>

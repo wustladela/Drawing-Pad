@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Edit Existing Drawing</title>
+    </head>
+    <body>
+        Change title(optional):  <input type="text" name="window_title" id="window_title"/>
+        <br>
+        <input type="button" name="windowbtn" id="windowbtn" value="Save Changes"/>
+        <style> body{text-align:center;}</style>
+        <script type="text/javascript">
+            //var date = new Date();
+            document.getElementById("windowbtn").addEventListener("click", window.opener.windowedit, false);
+        </script>
+    </body>
+</html>

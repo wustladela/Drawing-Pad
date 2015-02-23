@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Module 8</title>
+	<link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+	<link href="favicon.ico" rel="icon" type="image/x-icon" />
+</head>
+<body>
+	<ul id="navigation">
+		<li><a href="drawpad.html"> Drawing Pad</a></li>
+		<li><a href="main.html"> Dashboard</a></li>
+		<li><a href="friends.html">Friends</a></li>
+	</ul>
+	<br>
+	<h1>Friends</h1>
+	<br>
+	<table class="center" id="friends">
+		<tr><th>Friend List</th></tr>
+	</table>
+	<!-- <div class="newFriends" id="newFriends">
+	New Friends:
+	</div> -->
+	<div class="requests" id="requests">
+		<p id="dialogBox"><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span></p>
+
+		
+	</div>
+	<input type="button" name="seeRequests" id="seeRequests" value="See friend requests"/>
+	<div class="searchbox">
+		<input type="text" class="search" id="searchid" placeholder="Search for people" />&nbsp; &nbsp;
+		<input type="button" name="addFriend" id="addFriend" value="Add Friend"/>
+
+		<div id="searchBox"></div>
+	</div>
+	<div class="displayNames" id="displayNames">
+	</div>
+	<div class="otherPaintings">
+		<input type="text" class="otherNames" id="otherNames" placeholder="Look at others' paintings" />&nbsp; &nbsp;
+		<input type="button" name="seeOtherPaintings" id="seeOtherPaintings" value="See what others painted"/>
+
+		<div id="otherPaintings"></div>
+	</div>
+
+	<div class="delete">
+		<input type="text" class="deleteNames" id="deleteNames" placeholder="Remove friend" />&nbsp; &nbsp;
+		<input type="button" name="deletebtn" id="deletebtn" value="unfriend"/>
+
+		<div id="deletebox"></div>
+	</div>
+	<!--<script type="text/javascript" src="jquery.js"></script>-->
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js"></script>
+	<script type="text/javascript">
+	var requestingFriends=[];
+	var index=0;
+	var noRequests=false;
+	
+		$(document).ready(function(){
+			var requestFrom = "";
+			$("#seeRequests").click(function() {
+				$.ajax({
+					url: 'checkRequests.php',
+					type: 'POST',
+					success: function(response){
+						var json_response=$.parseJSON(response);
+						if (json_response.status=="fail") {
+							noRequests=true;
+							alert("no friend requests right now")};
+						for(var i=0; i<json_response.status.length; i++){
+						requestingFriends[i] = json_response.status[i];
+						
+						}
+						if(!noRequests){
+							$.fn.request(); 
+						}
+							
+						}
+				});
+				$.fn.request=function(){
+					//alert("reached");
+					
+					var indexNum=0;
+					$(".requests .ui-widget-content").css("background-color", "#CCFFFF"); 
+					// $("#requests").text("request from:"+requestingFriends[indexNum]);
+					//alert("request from:"+requestingFriends[indexNum]);
+					//alert("indexNumber: "+indexNum);
+					var text_value=requestingFriends[indexNum];
+					$("#requests").text(text_value);
+					$("#requests").dialog({
+					autoOpen: true,
+					 height: 100,
+					 width: 300,
+					 modal: false,
+					 draggable: true,
+					  dialogClass: "requests",
+					buttons: {
+						"Accept": function() {
+							$.ajax({
+								url: 'addFriend.php',
+								type: 'POST',
+								data: "newName="+requestingFriends[indexNum],
+								success: function(response){
+									alert("accepted friend request from "+requestingFriends[indexNum]);
+									displayFriends();
+									indexNum++;
+									text_value=requestingFriends[indexNum];
+								    $("#requests").text(text_value);
+									// if ((indexNum+1)<requestingFriends.length){
+										
+									// }
+								},
+								error: function(response){
+									alert("accept friend request error");
+								},
+
+							});
+
+							if ((indexNum+1)==requestingFriends.length){
+								$(this).dialog( "close" );
+								displayFriends();
+							}
+							else if ((indexNum+1)<requestingFriends.length){
+								var text_value=requestingFriends[indexNum];
+							}	
+						},
+						"Ignore": function() {
+							$.ajax({
+								url: 'deleteRequest.php',
+								type: 'POST',
+								data: "deletedRequestFrom="+requestingFriends[indexNum],
+								success: function(response){
+								alert("Ignored friend request");
+								// if ((indexNum+1)<requestingFriends.length){
+								// 	$("#requests").text("request from:"+requestingFriends[indexNum]);	
+								// 	}
+								indexNum++;
+							},
+							error: function(response){
+								alert("ignore request error");
+							}
+							})		
+							indexNum++;
+							if ((indexNum+1)==requestingFriends.length){
+								$(this).dialog( "close" );
+							}
+							else if ((indexNum+1)<requestingFriends.length){
+								text_value=requestingFriends[indexNum];
+								$("#requests").text(text_value);
+							}
+							
+						}
+					}
+				});	
+				}	
+			});
+			$(".search").keydown(function(){
+				//alert("reached keydown");
+				$(".search").css("background-color","yellow");
+				var inputSearch = $(this).val();
+				//alert(inputSearch);
+				var escapedSearch = inputSearch;
+				//alert(escapedSearch);
+				if(escapedSearch!=""){
+					//alert("reached notnull");
+					$.ajax({
+						type: "POST",
+						url: "searchNew.php",
+						data: "escapedSearch="+escapedSearch,
+						success: function(response)
+						{
+							//alert("reached ajax success");
+							var json_response=$.parseJSON(response);
+							var resultName = "Existing users:";
+							for(var i=0;i<json_response.people.length;i++){
+								//alert("reached for loop");
+								resultName+= "<li>"+json_response.people[i]+"</li>";
+		//$("#result").append().show();		//html(data).show();
+	}
+	$("#displayNames").html(resultName).show();
+
+}
+});
+				}
+			});
+			$("#addFriend").click(function() {
+				var inputSearch = $("#searchid").val();
+				var escapedSearch = inputSearch;
+				if(escapedSearch!="") {
+					$.ajax({
+						url: 'addFriend.php',
+						type: 'POST',
+						data: "newName="+escapedSearch,
+						success: function(response){
+							//alert("make it here");
+							var json_response=$.parseJSON(response);
+							var display = json_response.status;
+							if (display=="success"){
+								alert("Friend request sent");	
+							}
+							else if(display=="nonExist"){
+								alert("username not exist. please double check your spelling");
+							}
+							else {
+								alert("Already in friend list");
+							}
+						},
+						error: function(response){
+							alert("error");
+   		//var display = (string)response;
+   		var json_response=$.parseJSON(response);
+   		var result = "";
+   		for(var i=0;i<json_response.status.length;i++){
+   			result+= json_response.status[i];
+   		}
+   		// $("<div/>").html(encodedStr).text();
+   		var display = html(json_response).text();
+   		
+   		//alert("failed. please try again later"+result);
+   	}
+   });
+				}
+			});
+
+
+//see other paintings
+$("#seeOtherPaintings").click(function(){
+	var inputSearch = $("#otherNames").val();
+	if(inputSearch!=""){
+		$.ajax({
+			url: 'setFriendName.php',
+			type: 'POST',	
+			data: "inputName="+inputSearch,
+			success: function(response){
+				var json_response=$.parseJSON(response);
+				var display = json_response.status;
+				if (display=="success"){
+					window.location = "main.html";	
+				}
+				else {
+					alert("You are not friends with this user.");
+				}
+			},
+		})
+		
+	}
+});
+$("#deletebtn").click(function() {
+	var inputName = $("#deleteNames").val();
+	if (inputName!=""){
+		$.ajax({
+			url: 'deleteFriend.php',
+			type: 'POST',
+
+			data: "deleteName="+inputName,
+			success: function(response){
+				var json_response=$.parseJSON(response);
+				var display = json_response.status;
+				if (display=="success"){
+					displayFriends();
+					alert("deleted");	
+				}
+				else {
+					alert("Invalid deletion. friend not exist");
+				}
+				displayFriends();
+			},
+			error: function(response){
+				alert("delete method error");
+			}
+
+		})
+
+	}
+});
+
+
+});
+
+document.addEventListener("DOMContentLoaded", displayFriends, false);
+function displayFriends(){
+				//alert("reached displayFriends");
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("POST", "displayFriends.php", true);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xmlHttp.addEventListener("load", displayFriendsCallback, false);
+				xmlHttp.send(null);
+			}
+			function displayFriendsCallback(event){
+				//alert("reached displayFriendsCallback");
+				var json_response = JSON.parse(event.target.responseText);
+				if(json_response.status=="success"){
+					//alert("displayFriends success");
+					document.getElementById("friends").innerHTML="<tr><th>Friend List</th></tr>";
+					for(var i=0;i<json_response.friends.length;i++){
+						document.getElementById("friends").innerHTML+="<tr id='1'><td>"+json_response.friends[i]+"</td></tr>";
+					}					
+				}
+				if(json_response.status=="fail"){
+					alert("displayFriends fail");
+				}
+			}
+
+		</script>
+	</body>
+	</html>
